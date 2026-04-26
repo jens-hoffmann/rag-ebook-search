@@ -1,0 +1,68 @@
+# RAG Application for Ebook Search
+
+[project]
+name = "rag-ebook-search"
+version = "0.1.0"
+description = "RAG application for searching PDF and EPUB ebooks using vector embeddings"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "sqlalchemy>=2.0.25",
+    "asyncpg>=0.29.0",
+    "psycopg2-binary>=2.9.9",
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langchain-postgres>=0.0.12",
+    "langchain-text-splitters>=0.3.0",
+    "pypdf>=3.17.0",
+    "ebooklib>=0.17",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "python-multipart>=0.0.7",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.26.0",
+    "streamlit>=1.30.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "testcontainers>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "tox>=4.12.0",
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+    "types-beautifulsoup4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests/unit"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rag_ebook_search"]
