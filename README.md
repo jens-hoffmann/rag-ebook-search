@@ -11,6 +11,8 @@ A RAG (Retrieval-Augmented Generation) application that makes your PDF and EPUB 
 - **FastAPI backend** with async database support
 - **VectorChord** extension on PostgreSQL for vector storage
 - **LMStudio** integration for both embeddings and LLM inference
+- **Ports & Adapters architecture** for clean separation of concerns
+- **Centralized logging and error handling** with custom exceptions
 
 ## Architecture
 
@@ -25,6 +27,43 @@ A RAG (Retrieval-Augmented Generation) application that makes your PDF and EPUB 
                     │ (Embeddings │
                     │   + LLM)    │
                     └─────────────┘
+```
+
+### Ports & Adapters Structure
+
+```
+src/rag_ebook_search/
+├── main.py              # FastAPI app entry point
+├── streamlit_app.py     # Streamlit UI
+├── config.py            # Settings (from env)
+├── database.py          # Async SQLAlchemy engine
+├── models.py            # SQLAlchemy ORM models
+├── schemas.py           # Pydantic request/response schemas
+├── exceptions.py        # Custom exception hierarchy
+├── logging_config.py   # Centralized logging setup
+├── routers/            # FastAPI route handlers
+│   ├── books.py        # Book CRUD endpoints
+│   ├── search.py       # Vector search endpoint
+│   └── rag.py          # RAG Q&A endpoint
+├── ports/              # Interface definitions (hexagon core)
+│   ├── document_loader.py
+│   ├── embedding.py
+│   ├── llm.py
+│   ├── vector_store.py
+│   └── rag_chain.py
+├── adapters/           # Implementation of ports
+│   ├── document_loader.py  # PDF/EPUB parsing (LangChain)
+│   ├── embedding.py         # LMStudio embeddings
+│   ├── llm.py              # LMStudio LLM
+│   ├── vector_store.py      # PGVector store
+│   └── rag_chain.py         # RAG pipeline
+├── services/            # Dependency injection & FastAPI deps
+│   ├── container.py     # DI container
+│   └── fastapi_deps.py  # FastAPI dependency providers
+└── use_cases/          # Application business logic
+    ├── upload.py        # Book upload orchestration
+    ├── search.py        # Search orchestration
+    └── rag.py           # RAG orchestration
 ```
 
 ## Prerequisites
@@ -101,9 +140,10 @@ tox
 Run specific environments:
 
 ```bash
-tox -e py312    # pytest
-tox -e lint     # ruff
-tox -e type     # mypy
+tox -e test        # unit tests
+tox -e integration # integration tests with PostgreSQL
+tox -e lint        # ruff linting
+tox -e type        # mypy type checking
 ```
 
 ## Container Deployment
@@ -128,32 +168,19 @@ podman run -p 8000:8000 --env-file .env rag-ebook-search
 3. Download and load a **chat LLM** (e.g. `Llama-3.2-3B-Instruct`)
 4. Start the local server in LMStudio (default port 1234)
 
-## Project Structure
+## Error Handling
 
-```
-.
-├── src/rag_ebook_search/
-│   ├── main.py              # FastAPI app
-│   ├── streamlit_app.py     # Streamlit UI
-│   ├── config.py            # Settings
-│   ├── database.py          # DB connection
-│   ├── models.py            # SQLAlchemy ORM
-│   ├── schemas.py           # Pydantic schemas
-│   ├── routers/
-│   │   ├── books.py         # Book CRUD
-│   │   ├── search.py        # Vector search
-│   │   └── rag.py           # RAG Q&A
-│   └── services/
-│       ├── document_loader.py    # PDF/EPUB parsing
-│       ├── embedding_service.py  # LMStudio embeddings
-│       ├── vector_store.py       # PGVector store
-│       └── rag_chain.py          # RAG pipeline
-├── tests/                   # pytest test suite
-├── Containerfile            # Podman image
-├── compose.yaml             # Podman compose
-├── tox.ini                  # tox config
-└── pyproject.toml           # Project deps
-```
+The application uses a custom exception hierarchy for structured error handling:
+
+- `RAGApplicationError` — base exception
+- `DocumentProcessingError` — PDF/EPUB parsing failures
+- `VectorStoreError` — embedding/vector storage failures
+- `DatabaseError` — database operation failures
+- `LLMError` — LLM inference failures
+- `BookNotFoundError` — requested book not found
+- `InvalidFileTypeError` — unsupported file type
+
+Logs are centralized via `logging_config.py` with configurable log levels via `LOG_LEVEL` environment variable.
 
 ## License
 
